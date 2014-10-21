@@ -2,6 +2,7 @@
 # Cathy
 # 2014.10.21
 
+import sqlite3 as s
 from graphics import *
 
 ScreenWidth = 640
@@ -9,6 +10,12 @@ ScreenHeight = 360
 
 def __main__():
 
+    # Connect to sqlite
+    cx = s.connect("dict.db")
+    cu = cx.cursor()
+    select_sql = "select desc from dict where word = ?"
+
+    # Prepare win
     win = GraphWin("Cultural Dictionary", ScreenWidth, ScreenHeight);
     win.setBackground('white')
     win.setCoords(0.0, 0.0, 3.0, 4.0)
@@ -22,6 +29,7 @@ def __main__():
     Rectangle(Point(2.2, 3.65), Point(2.8, 3.35)).draw(win)
     Text(Point(2.5, 3.5), "Search").draw(win)
 
+    #Prepare output
     output = Text(Point(1.5, 2.0),"")
     output.setSize(14)
     output.draw(win)
@@ -32,16 +40,22 @@ def __main__():
         # Check if it's in search rect
         p = win.getMouse()
         while (not(2.2<p.getX()<2.8 and 3.35<p.getY()<3.65)): p = win.getMouse()
-        print "x=", p.getX(), " y=", p.getY()
         word = wordRect.getText()
-        print "word=", word
 
         # Get description
-        description = "Albert Einstein was born to a middle-class German Jewish family. His parents were concerned that he scarcely talked until the age of three, but he was not stupid as a quiet child. He would build tall houses of cards and hated playing soldier. At the age of twelve he was fascinated by a geometry book."
+        cu.execute(select_sql, [word])
+        description = cu.fetchone()
+        if description:
+            description = description[0]
+        else:
+            description = "No record for this word"
+
         # Format description
         formated_description = ""
-        for i in range(len(description)/50):
+        n = len(description)/50
+        for i in range(n):
             formated_description = formated_description + description[50*i:50*(i+1)] + "\n"
+        formated_description = formated_description + description[50*n:]
         output.setText(formated_description)
 
     win.getMouse()
